@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoSort | Next-Gen File Automation</title>
+    <!-- Fonts: Space Grotesk for headers, Inter for body -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-dark: #0B0C15;
+            --bg-card: #151725;
+            --primary: #6366f1; /* Indigo */
+            --primary-glow: rgba(99, 102, 241, 0.5);
+            --accent: #06b6d4; /* Cyan */
+            --accent-glow: rgba(6, 182, 212, 0.5);
+            --text-main: #e2e8f0;
+            --text-muted: #94a3b8;
+            --gradient-main: linear-gradient(135deg, #6366f1 0%, #06b6d4 100%);
+            --glass: rgba(255, 255, 255, 0.03);
+            --border: rgba(255, 255, 255, 0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; scroll-behavior: smooth; }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        h1, h2, h3, h4 { font-family: 'Space Grotesk', sans-serif; color: white; }
+
+        /* --- Background Effects --- */
+        .bg-glow {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: -1;
+            background: 
+                radial-gradient(circle at 15% 50%, rgba(99, 102, 241, 0.08), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(6, 182, 212, 0.08), transparent 25%);
+            pointer-events: none;
+        }
+
+        /* --- Grid Pattern Overlay --- */
+        .grid-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            z-index: -1;
+            mask-image: linear-gradient(to bottom, black 40%, transparent 100%);
+        }
+
+        /* --- Navigation --- */
+        nav {
+            position: fixed;
+            top: 0; width: 100%;
+            padding: 1.5rem 2rem;
+            display: flex; justify-content: space-between; align-items: center;
+            background: rgba(11, 12, 21, 0.7);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .logo {
+            font-size: 1.5rem; font-weight: 700;
+            background: var(--gradient-main);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex; align-items: center; gap: 0.5rem;
+        }
+
+        .nav-btn {
+            background: var(--glass);
+            color: white; border: 1px solid var(--border);
+            padding: 0.6rem 1.2rem; border-radius: 8px;
+            cursor: pointer; transition: all 0.3s ease;
+            font-family: 'Space Grotesk', sans-serif;
+            text-decoration: none; font-size: 0.9rem;
+        }
+
+        .nav-btn:hover {
+            border-color: var(--accent);
+            box-shadow: 0 0 15px var(--accent-glow);
+            transform: translateY(-2px);
+        }
+
+        .nav-btn.fill {
+            background: var(--gradient-main);
+            border: none;
+        }
+
+        /* --- Layout --- */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        section {
+            padding: 6rem 0;
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        section.visible { opacity: 1; transform: translateY(0); }
+
+        /* --- Hero Section --- */
+        #hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            position: relative;
+        }
+
+        .hero-content h1 {
+            font-size: 4.5rem;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            letter-spacing: -2px;
+        }
+
+        .hero-content p {
+            font-size: 1.25rem;
+            color: var(--text-muted);
+            max-width: 600px;
+            margin: 0 auto 3rem;
+        }
+
+        .glitch-text {
+            position: relative;
+        }
+
+        .hero-visual {
+            margin-top: 3rem;
+            position: relative;
+            width: 100%;
+            height: 400px;
+            background: radial-gradient(circle at center, rgba(99, 102, 241, 0.1) 0%, transparent 70%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* --- Glass Cards --- */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 2.5rem;
+            border-radius: 16px;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, transparent 100%);
+            opacity: 0;
+            transition: opacity 0.4s;
+        }
+
+        .card:hover {
+            transform: translateY(-10px);
+            border-color: var(--primary);
+            box-shadow: 0 10px 40px -10px var(--primary-glow);
+        }
+
+        .card:hover::before { opacity: 1; }
+
+        .card-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1.5rem;
+            background: var(--gradient-main);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* --- Workflow (Pipeline Style) --- */
+        .pipeline-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            background: rgba(0,0,0,0.2);
+            padding: 3rem;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            position: relative;
+        }
+
+        .pipeline-step {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            background: var(--bg-card);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border-left: 4px solid var(--text-muted);
+            transition: all 0.3s;
+        }
+
+        .pipeline-step:hover {
+            border-left-color: var(--accent);
+            background: #1a1c2e;
+        }
+
+        .step-num {
+            font-family: 'Space Grotesk';
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-muted);
+        }
+
+        .pipeline-step.active .step-num { color: var(--accent); text-shadow: 0 0 10px var(--accent); }
+        .pipeline-step.done .step-num { color: var(--primary); }
+
+        /* --- Comparison (Split View) --- */
+        .comparison-wrapper {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .comp-side {
+            padding: 3rem;
+            position: relative;
+        }
+
+        .comp-bad {
+            background: rgba(239, 68, 68, 0.05);
+            border-right: 1px solid var(--border);
+        }
+
+        .comp-good {
+            background: rgba(16, 185, 129, 0.05);
+        }
+
+        .comp-title {
+            font-size: 1.5rem;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .comp-list li {
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            color: var(--text-muted);
+        }
+
+        /* --- Tech Stack (Pills) --- */
+        .tech-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 50px;
+            margin: 0.5rem;
+            font-family: 'Space Grotesk';
+            font-size: 0.9rem;
+            transition: 0.3s;
+        }
+
+        .tech-pill:hover {
+            border-color: var(--primary);
+            box-shadow: 0 0 15px var(--primary-glow);
+            color: white;
+        }
+
+        /* --- Wireframes (Holographic) --- */
+        .holo-mockup {
+            background: rgba(20, 20, 30, 0.8);
+            border: 1px solid rgba(6, 182, 212, 0.3);
+            border-radius: 12px;
+            padding: 10px;
+            box-shadow: 0 0 20px rgba(6, 182, 212, 0.1);
+        }
+        
+        .holo-screen {
+            background: #0f1016;
+            border-radius: 8px;
+            height: 250px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .scan-line {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 2px;
+            background: var(--accent);
+            box-shadow: 0 0 10px var(--accent);
+            animation: scan 3s linear infinite;
+        }
+
+        @keyframes scan {
+            0% { top: 0%; opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { top: 100%; opacity: 0; }
+        }
+
+        /* --- Footer --- */
+        footer {
+            text-align: center;
+            padding: 5rem 0;
+            border-top: 1px solid var(--border);
+            background: linear-gradient(to top, rgba(99, 102, 241, 0.1), transparent);
+        }
+
+        .footer-cta {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+        }
+
+        /* --- SVG Animation --- */
+        .floating-icon {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+            100% { transform: translateY(0px); }
+        }
+
+        /* Mobile */
+        @media (max-width: 768px) {
+            .hero-content h1 { font-size: 3rem; }
+            .comparison-wrapper { grid-template-columns: 1fr; }
+            .comp-bad { border-right: none; border-bottom: 1px solid var(--border); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Ambient Backgrounds -->
+    <div class="bg-glow"></div>
+    <div class="grid-overlay"></div>
+
+    <!-- Nav -->
+    <nav>
+        <div class="logo">
+            <i class="fa-solid fa-cube"></i> AUTOSORT
+        </div>
+        <div style="display: flex; gap: 1rem;">
+            <a href="#overview" class="nav-btn">Case Study</a>
+            <a href="#tech" class="nav-btn fill">Tech Stack</a>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="hero" class="visible">
+        <div class="container">
+            <div class="hero-content">
+                <span style="color: var(--accent); letter-spacing: 2px; text-transform: uppercase; font-size: 0.9rem; font-weight: 600;">Business Analysis Project</span>
+                <h1>Intelligent File<br><span style="background: var(--gradient-main); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Automation System</span></h1>
+                <p>Transforming chaotic digital environments into structured, automated workflows using Python.</p>
+                
+                <div style="display: flex; gap: 1rem; justify-content: center;">
+                    <a href="#problem" class="nav-btn fill" style="padding: 1rem 2rem; font-size: 1rem;">Explore Solution <i class="fa-solid fa-arrow-right"></i></a>
+                </div>
+
+                <div class="hero-visual">
+                    <!-- Animated SVG Visual -->
+                    <svg width="400" height="300" viewBox="0 0 400 300" fill="none" xmlns="http://www.w3.org/2000/svg" class="floating-icon">
+                        <!-- Central Core -->
+                        <circle cx="200" cy="150" r="40" fill="url(#paint0_linear)" filter="url(#glow)"/>
+                        <path d="M200 110V70M200 190V230M160 150H120M240 150H280" stroke="url(#paint0_linear)" stroke-width="4" stroke-linecap="round"/>
+                        
+                        <!-- Orbiting Elements -->
+                        <circle cx="120" cy="80" r="15" fill="#06b6d4" opacity="0.8">
+                            <animateTransform attributeName="transform" type="rotate" from="0 200 150" to="360 200 150" dur="10s" repeatCount="indefinite"/>
+                        </circle>
+                        <circle cx="280" cy="220" r="15" fill="#6366f1" opacity="0.8">
+                            <animateTransform attributeName="transform" type="rotate" from="360 200 150" to="0 200 150" dur="10s" repeatCount="indefinite"/>
+                        </circle>
+
+                        <!-- Data Lines -->
+                        <path d="M100 150 L160 150" stroke="#334155" stroke-dasharray="4 4"/>
+                        <path d="M240 150 L300 150" stroke="#334155" stroke-dasharray="4 4"/>
+
+                        <defs>
+                            <linearGradient id="paint0_linear" x1="160" y1="110" x2="240" y2="190" gradientUnits="userSpaceOnUse">
+                                <stop stop-color="#6366f1"/>
+                                <stop offset="1" stop-color="#06b6d4"/>
+                            </linearGradient>
+                            <filter id="glow" x="150" y="100" width="100" height="100" filterUnits="userSpaceOnUse">
+                                <feGaussianBlur stdDeviation="10" result="effect1_foregroundBlur"/>
+                            </filter>
+                        </defs>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Problem & Overview -->
+    <section id="overview">
+        <div class="container">
+            <div class="card-grid">
+                <div class="card">
+                    <i class="fa-solid fa-triangle-exclamation card-icon"></i>
+                    <h3>The Problem</h3>
+                    <p style="color: var(--text-muted); margin-top: 1rem;">
+                        Manual file sorting is a massive bottleneck. Inconsistent naming, mixed formats, and human error lead to lost productivity and data chaos.
+                    </p>
+                    <ul style="margin-top: 1.5rem; list-style: none; color: var(--text-muted);">
+                        <li style="margin-bottom: 0.5rem;"><i class="fa-solid fa-xmark" style="color: #ef4444;"></i> 15 mins per batch</li>
+                        <li><i class="fa-solid fa-xmark" style="color: #ef4444;"></i> High error rate</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <i class="fa-solid fa-bullseye card-icon"></i>
+                    <h3>The Objective</h3>
+                    <p style="color: var(--text-muted); margin-top: 1rem;">
+                        Deploy a Python-based script to automate directory scanning, file type identification, and logical sorting into dynamic folders.
+                    </p>
+                    <ul style="margin-top: 1.5rem; list-style: none; color: var(--text-muted);">
+                        <li style="margin-bottom: 0.5rem;"><i class="fa-solid fa-check" style="color: #10b981;"></i> Instant execution</li>
+                        <li><i class="fa-solid fa-check" style="color: #10b981;"></i> 100% Accuracy</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Workflow Visualization -->
+    <section id="problem">
+        <div class="container">
+            <div style="text-align: center; margin-bottom: 3rem;">
+                <span style="color: var(--accent); text-transform: uppercase; letter-spacing: 1px;">System Architecture</span>
+                <h2 style="font-size: 2.5rem; margin-top: 0.5rem;">Automated Pipeline</h2>
+            </div>
+
+            <div class="pipeline-container">
+                <div class="pipeline-step">
+                    <div class="step-num">01</div>
+                    <div>
+                        <h4 style="margin-bottom: 0.25rem;">Input Directory</h4>
+                        <p style="color: var(--text-muted); font-size: 0.9rem;">User selects the source folder containing unstructured files.</p>
+                    </div>
+                    <i class="fa-regular fa-folder-open" style="margin-left: auto; font-size: 1.5rem; color: var(--text-muted);"></i>
+                </div>
+
+                <div class="pipeline-step">
+                    <div class="step-num">02</div>
+                    <div>
+                        <h4 style="margin-bottom: 0.25rem;">OS Scan & Parse</h4>
+                        <p style="color: var(--text-muted); font-size: 0.9rem;">System iterates through files using `os.listdir()` and identifies extensions.</p>
+                    </div>
+                    <i class="fa-solid fa-microchip" style="margin-left: auto; font-size: 1.5rem; color: var(--primary);"></i>
+                </div>
+
+                <div class="pipeline-step">
+                    <div class="step-num">03</div>
+                    <div>
+                        <h4 style="margin-bottom: 0.25rem;">Dynamic Logic</h4>
+                        <p style="color: var(--text-muted); font-size: 0.9rem;">Checks if category folders exist. If not, creates them via `os.mkdir()`.</p>
+                    </div>
+                    <i class="fa-solid fa-wand-magic-sparkles" style="margin-left: auto; font-size: 1.5rem; color: var(--accent);"></i>
+                </div>
+
+                <div class="pipeline-step active">
+                    <div class="step-num">04</div>
+                    <div>
+                        <h4 style="margin-bottom: 0.25rem;">Execution (Move)</h4>
+                        <p style="color: var(--text-muted); font-size: 0.9rem;">`shutil.move()` relocates files to their respective directories instantly.</p>
+                    </div>
+                    <i class="fa-solid fa-check-circle" style="margin-left: auto; font-size: 1.5rem; color: var(--success);"></i>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Comparison -->
+    <section>
+        <div class="container">
+            <div class="comparison-wrapper">
+                <!-- Manual -->
+                <div class="comp-side comp-bad">
+                    <div class="comp-title" style="color: #f87171;">
+                        <i class="fa-solid fa-user-clock"></i> Manual Workflow
+                    </div>
+                    <ul class="comp-list" style="list-style: none;">
+                        <li><i class="fa-solid fa-hand"></i> Individual file selection</li>
+                        <li><i class="fa-solid fa-folder-plus"></i> Manual folder creation</li>
+                        <li><i class="fa-solid fa-rotate"></i> Repetitive drag-and-drop</li>
+                        <li><i class="fa-solid fa-triangle-exclamation"></i> Prone to misfiling</li>
+                    </ul>
+                </div>
+                <!-- Auto -->
+                <div class="comp-side comp-good">
+                    <div class="comp-title" style="color: #34d399;">
+                        <i class="fa-solid fa-robot"></i> Automated Workflow
+                    </div>
+                    <ul class="comp-list" style="list-style: none;">
+                        <li><i class="fa-solid fa-bolt"></i> Batch processing</li>
+                        <li><i class="fa-solid fa-layer-group"></i> Auto-categorization</li>
+                        <li><i class="fa-solid fa-terminal"></i> One-click execution</li>
+                        <li><i class="fa-solid fa-shield-halved"></i> Zero error margin</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Wireframes & Visuals -->
+    <section id="design">
+        <div class="container">
+            <div style="text-align: center; margin-bottom: 3rem;">
+                <h2>Interface Design</h2>
+                <p style="color: var(--text-muted);">Minimalist, functional wireframes for maximum efficiency.</p>
+            </div>
+
+            <div class="card-grid">
+                <!-- UI 1 -->
+                <div class="holo-mockup">
+                    <div class="holo-screen">
+                        <div class="scan-line"></div>
+                        <i class="fa-solid fa-folder-tree" style="font-size: 3rem; color: var(--text-muted); margin-bottom: 1rem;"></i>
+                        <div style="width: 80%; height: 10px; background: #334155; border-radius: 4px;"></div>
+                        <div style="width: 60%; height: 10px; background: #334155; border-radius: 4px; margin-top: 10px;"></div>
+                        <div style="margin-top: 2rem; width: 50%; height: 30px; background: var(--primary); border-radius: 4px; box-shadow: 0 0 10px var(--primary);"></div>
+                    </div>
+                    <p style="text-align: center; margin-top: 10px; font-size: 0.8rem; color: var(--accent);">01. SELECTION</p>
+                </div>
+
+                <!-- UI 2 -->
+                <div class="holo-mockup">
+                    <div class="holo-screen">
+                        <div class="scan-line" style="animation-duration: 1.5s;"></div>
+                        <div style="font-family: monospace; color: var(--accent); font-size: 0.8rem;">
+                            > Scanning directory...<br>
+                            > Found 142 files.<br>
+                            > Sorting [JPG] -> Images<br>
+                            > Sorting [PDF] -> Docs<br>
+                            > ...
+                        </div>
+                    </div>
+                    <p style="text-align: center; margin-top: 10px; font-size: 0.8rem; color: var(--accent);">02. PROCESSING</p>
+                </div>
+
+                <!-- UI 3 -->
+                <div class="holo-mockup">
+                    <div class="holo-screen">
+                        <i class="fa-solid fa-circle-check" style="font-size: 3rem; color: #10b981; margin-bottom: 1rem; text-shadow: 0 0 20px #10b981;"></i>
+                        <h3>Complete</h3>
+                        <p style="font-size: 0.9rem; color: var(--text-muted);">142 Files Organized</p>
+                    </div>
+                    <p style="text-align: center; margin-top: 10px; font-size: 0.8rem; color: var(--accent);">03. SUCCESS</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Tech Stack & Skills -->
+    <section id="tech">
+        <div class="container" style="text-align: center;">
+            <h2 style="margin-bottom: 3rem;">Technology Stack</h2>
+            
+            <div style="margin-bottom: 4rem;">
+                <span class="tech-pill"><i class="fa-brands fa-python"></i> Python</span>
+                <span class="tech-pill"><i class="fa-solid fa-terminal"></i> OS Module</span>
+                <span class="tech-pill"><i class="fa-solid fa-box-archive"></i> Shutil</span>
+                <span class="tech-pill"><i class="fa-brands fa-linux"></i> Linux/Windows</span>
+            </div>
+
+            <div style="background: var(--bg-card); padding: 3rem; border-radius: 20px; border: 1px solid var(--border);">
+                <h3 style="margin-bottom: 2rem;">Business Analysis Skills</h3>
+                <div class="card-grid">
+                    <div>
+                        <h4 style="color: var(--primary);">Process Optimization</h4>
+                        <p style="font-size: 0.9rem; color: var(--text-muted); margin-top: 0.5rem;">Identified bottlenecks and restructured the workflow for maximum throughput.</p>
+                    </div>
+                    <div>
+                        <h4 style="color: var(--primary);">Requirement Gathering</h4>
+                        <p style="font-size: 0.9rem; color: var(--text-muted); margin-top: 0.5rem;">Translated stakeholder needs into functional technical specifications.</p>
+                    </div>
+                    <div>
+                        <h4 style="color: var(--primary);">Data Governance</h4>
+                        <p style="font-size: 0.9rem; color: var(--text-muted); margin-top: 0.5rem;">Established standard naming conventions and taxonomies.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <h2 class="footer-cta" style="background: var(--gradient-main); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Future Ready.</h2>
+            <p style="color: var(--text-muted); margin-bottom: 2rem;">Planned: Cloud Integration, GUI Development, AI Categorization.</p>
+            <a href="https://github.com/aryamenoth/python-file-automation" class="nav-btn fill" style="padding: 1rem 3rem; font-size: 1.1rem;">View Source Code</a>
+            <div style="margin-top: 4rem; color: var(--text-muted); font-size: 0.8rem;">
+                &copy; 2026 Python Automation System. Designed for Business Excellence.
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Intersection Observer for Scroll Animations
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.1 });
+
+        document.querySelectorAll('section').forEach(section => {
+            observer.observe(section);
+        });
+    </script>
+</body>
+</html>
